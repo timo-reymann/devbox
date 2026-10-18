@@ -4,6 +4,9 @@
 
 # devbox
 
+> **Work in progress.** The project is not ready for use. Everything can
+> change without notice.
+
 A browser-based dev environment with a dashboard in front of everything.
 One image, two ways to run it:
 
