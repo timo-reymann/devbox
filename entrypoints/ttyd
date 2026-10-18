@@ -1,0 +1,13 @@
+#!/bin/sh
+set -e
+
+TTYD_PORT="${TTYD_PORT:-8083}"
+
+exec ttyd \
+    --interface 127.0.0.1 \
+    --port "${TTYD_PORT}" \
+    --base-path /terminal \
+    --writable \
+    --cwd /home/ubuntu \
+    -t enableTrzsz=true \
+    bash -l

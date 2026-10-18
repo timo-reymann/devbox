@@ -1,0 +1,21 @@
+#!/bin/sh
+set -e
+
+PI_PREFIX="${PI_PREFIX:-/opt/devbox/pi}"
+
+# The pi stack ships its own Node toolchain; put it first so pi and PI WEB
+# always run on the pinned runtime, even when asdf has Node versions installed.
+PATH="${PI_PREFIX}/bin:${PI_PREFIX}/node/bin:${PATH}"
+export PATH
+
+PI_WEB_CONFIG="${PI_WEB_CONFIG:-/data/pi-web/config.json}"
+PI_WEB_DATA_DIR="${PI_WEB_DATA_DIR:-/data/pi-web}"
+PI_WEB_PORT="${PI_WEB_PORT:-8504}"
+export PI_WEB_CONFIG PI_WEB_DATA_DIR PI_WEB_PORT
+
+install -d -m 0755 "$PI_WEB_DATA_DIR" "$(dirname "$PI_WEB_CONFIG")"
+if [ ! -f "$PI_WEB_CONFIG" ]; then
+    cp "${PI_PREFIX}/config.json" "$PI_WEB_CONFIG"
+fi
+
+exec pi-web-sessiond

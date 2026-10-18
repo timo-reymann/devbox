@@ -1,0 +1,20 @@
+#!/bin/sh
+set -e
+
+KEYS_FILE="/data/ssh/authorized_keys"
+TARGET="/etc/ssh/authorized_keys/ubuntu"
+
+sudo install -d -m 0755 -o root -g root /run/sshd
+sudo ssh-keygen -A
+
+sudo install -d -m 0755 /etc/ssh/authorized_keys
+{
+    [ -r "$KEYS_FILE" ] && cat "$KEYS_FILE"
+    [ -n "$SSH_AUTHORIZED_KEYS" ] && printf '%s\n' "$SSH_AUTHORIZED_KEYS"
+    true
+} | sudo tee "$TARGET" > /dev/null
+sudo chmod 0644 "$TARGET"
+
+SSH_PORT="${SSH_PORT:-8022}"
+
+exec sudo /usr/sbin/sshd -D -e -p "${SSH_PORT}"

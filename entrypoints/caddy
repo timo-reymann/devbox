@@ -1,0 +1,32 @@
+#!/bin/sh
+set -e
+
+SSH_HOST="${SSH_HOST:-localhost}"
+SSH_PUBLISHED_PORT="${SSH_PUBLISHED_PORT:-8022}"
+OPENCODE_DIR="${OPENCODE_DIR:-/home/ubuntu}"
+PI_WEB_PATH="${PI_WEB_PATH:-/pi}"
+HTTP_PORT="${HTTP_PORT:-8080}"
+TTYD_PORT="${TTYD_PORT:-8083}"
+PI_WEB_PORT="${PI_WEB_PORT:-8504}"
+
+# opencode's router base64url-decodes the first path segment as the working
+# directory, so the entry URL must be /<base64url(OPENCODE_DIR)>/
+OPENCODE_DIR_B64=$(printf '%s' "$OPENCODE_DIR" | base64 -w 0 | tr '+/' '-_' | tr -d '=')
+
+install -d -m 0755 /srv/dashboard "$HOME/.config/caddy"
+
+sed -e "s|{{SSH_HOST}}|${SSH_HOST}|g" \
+    -e "s|{{SSH_PUBLISHED_PORT}}|${SSH_PUBLISHED_PORT}|g" \
+    -e "s|{{PI_WEB_PATH}}|${PI_WEB_PATH}|g" \
+    /opt/devbox/dashboard/index.template.html > /srv/dashboard/index.html
+
+sed -e "s|{{OPENCODE_DIR_B64}}|${OPENCODE_DIR_B64}|g" \
+    -e "s|{{PI_WEB_PATH}}|${PI_WEB_PATH}|g" \
+    -e "s|{{HTTP_PORT}}|${HTTP_PORT}|g" \
+    -e "s|{{CODE_SERVER_PORT}}|${CODE_SERVER_PORT:-8082}|g" \
+    -e "s|{{OPENCODE_SERVER_PORT}}|${OPENCODE_SERVER_PORT:-8081}|g" \
+    -e "s|{{TTYD_PORT}}|${TTYD_PORT}|g" \
+    -e "s|{{PI_WEB_PORT}}|${PI_WEB_PORT}|g" \
+    /opt/devbox/Caddyfile > "$HOME/.config/caddy/Caddyfile"
+
+exec caddy run --config "$HOME/.config/caddy/Caddyfile" --adapter caddyfile

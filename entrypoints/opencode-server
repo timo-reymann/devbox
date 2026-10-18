@@ -1,0 +1,4 @@
+#!/bin/sh
+OPENCODE_SERVER_PORT="${OPENCODE_SERVER_PORT:-8081}"
+opencode --help
+exec opencode serve --port "${OPENCODE_SERVER_PORT}" --hostname 0.0.0.0
