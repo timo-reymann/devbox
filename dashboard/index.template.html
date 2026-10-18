@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DevBox</title>
+  <link rel="icon" type="image/svg+xml" href="/icons/devbox.svg">
+  <style>
+    * { box-sizing: border-box; }
+
+    html, body { height: 100%; }
+
+    body {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 36px;
+      padding: 24px;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #f4f6f8;
+      color: #1b1f24;
+    }
+
+    .header {
+      text-align: center;
+    }
+
+    .header .logo {
+      width: 96px;
+      height: 96px;
+      border-radius: 22px;
+      margin-bottom: 12px;
+      box-shadow: 0 8px 24px rgba(79, 70, 229, 0.25);
+    }
+
+    .header h1 {
+      margin: 0 0 8px;
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .header p {
+      margin: 0;
+      font-size: 15px;
+      color: #5b6570;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px;
+      width: min(648px, 100%);
+    }
+
+    .card {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 16px;
+      padding: 24px;
+      background: #fff;
+      border: 1px solid #e3e8ee;
+      border-radius: 14px;
+      text-decoration: none;
+      color: inherit;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+
+    a.card:hover,
+    a.card:focus-visible {
+      transform: translateY(-3px);
+      border-color: #cbd5e1;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+      outline: none;
+    }
+
+    .card-head {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .card .icon {
+      flex: none;
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
+    }
+
+    .card h2 {
+      margin: 0 0 6px;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .card p {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.45;
+      color: #5b6570;
+    }
+
+    .card-ssh {
+      grid-column: 1 / -1;
+      flex-direction: row;
+      align-items: center;
+    }
+
+    .ssh-body {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .ssh-cmd {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .ssh-cmd code {
+      flex: 1;
+      min-width: 0;
+      padding: 9px 11px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: 13px;
+      background: #f1f3f5;
+      border: 1px solid #e4e8ec;
+      border-radius: 7px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      user-select: all;
+    }
+
+    .ssh-cmd button {
+      flex: none;
+      padding: 8px 16px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      color: #1b1f24;
+      background: #f1f3f5;
+      border: 1px solid #dde2e7;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .ssh-cmd button:hover {
+      background: #e7eaee;
+    }
+
+    @media (max-width: 560px) {
+      .cards { grid-template-columns: minmax(0, 1fr); }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #0f1115;
+        color: #e6e8eb;
+      }
+      .header p { color: #98a2ad; }
+      .card {
+        background: #171a20;
+        border-color: #262b33;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+      }
+      a.card:hover,
+      a.card:focus-visible {
+        border-color: #3a4150;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
+      }
+      .card p { color: #98a2ad; }
+      .ssh-cmd code {
+        background: #10131a;
+        border-color: #262b33;
+      }
+      .ssh-cmd button {
+        color: #e6e8eb;
+        background: #22262e;
+        border-color: #333a45;
+      }
+      .ssh-cmd button:hover { background: #2b313a; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <img class="logo" src="/icons/devbox.svg" alt="DevBox logo" width="96" height="96">
+    <h1>DevBox</h1>
+    <p>development container in a box with asdf, VS Code Web, OpenCode, Pi, Web Terminal, SSH ...</p>
+  </header>
+
+  <main class="cards">
+    <a class="card" href="/vscode">
+      <div class="card-head">
+        <img class="icon" src="/icons/vscode.svg" alt="Visual Studio Code icon">
+        <div>
+          <h2>VS Code</h2>
+          <p>Full VS Code in your browser, powered by code-server.</p>
+        </div>
+      </div>
+    </a>
+
+    <a class="card" href="/terminal">
+      <div class="card-head">
+        <img class="icon" src="/icons/ttyd.svg" alt="Web terminal icon">
+        <div>
+          <h2>Web Terminal</h2>
+          <p>A full shell in your browser, powered by ttyd.</p>
+        </div>
+      </div>
+    </a>
+
+    <a class="card" href="/opencode">
+      <div class="card-head">
+        <img class="icon" src="/icons/opencode.svg" alt="OpenCode icon">
+        <div>
+          <h2>OpenCode</h2>
+          <p>OpenCode coding agent with a built-in web interface.</p>
+        </div>
+      </div>
+    </a>
+
+    <a class="card" href="{{PI_WEB_PATH}}/">
+      <div class="card-head">
+        <img class="icon" src="/icons/pi.svg" alt="Pi icon">
+        <div>
+          <h2>Pi</h2>
+          <p>Web UI for the Pi coding agent with persistent sessions.</p>
+        </div>
+      </div>
+    </a>
+
+    <div class="card card-ssh">
+      <img class="icon" src="/icons/terminal.svg" alt="Terminal icon">
+      <div class="ssh-body">
+        <div>
+          <h2>SSH</h2>
+          <p>Direct terminal access to your devbox. Keys come from /data/ssh/authorized_keys or SSH_AUTHORIZED_KEYS.</p>
+        </div>
+        <div class="ssh-cmd">
+          <code id="ssh-command">ssh ubuntu@{{SSH_HOST}} -p {{SSH_PUBLISHED_PORT}}</code>
+          <button type="button" id="copy-ssh">Copy</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const btn = document.getElementById("copy-ssh");
+    const cmd = document.getElementById("ssh-command");
+
+    btn.addEventListener("click", async () => {
+      const text = cmd.textContent.trim();
+      let copied = false;
+
+      try {
+        await navigator.clipboard.writeText(text);
+        copied = true;
+      } catch (err) {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          copied = document.execCommand("copy");
+        } catch (err2) {
+          copied = false;
+        }
+        ta.remove();
+      }
+
+      btn.textContent = copied ? "Copied!" : "Copy failed";
+      setTimeout(() => {
+        btn.textContent = "Copy";
+      }, 1500);
+    });
+  </script>
+</body>
+</html>
