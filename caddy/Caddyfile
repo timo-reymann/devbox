@@ -1,0 +1,63 @@
+# Rendered by entrypoints/caddy at container start: {{HTTP_PORT}},
+# {{CODE_SERVER_PORT}}, {{OPENCODE_SERVER_PORT}}, {{TTYD_PORT}},
+# {{PI_WEB_PORT}} and {{PI_WEB_PATH}} all come from the environment.
+:{{HTTP_PORT}} {
+	root * /srv/dashboard
+
+	# VS Code Web (code-server)
+	redir /vscode /vscode/
+	handle_path /vscode/* {
+		reverse_proxy 127.0.0.1:{{CODE_SERVER_PORT}}
+	}
+
+	# OpenCode web UI.
+	#
+	# opencode 1.18.x has no base-path support: its router base64url-decodes
+	# the FIRST path segment of the URL as the working directory. A literal
+	# "/opencode" prefix would therefore decode to garbage and every API call
+	# fails with a 500. Redirect to opencode's native route format instead,
+	# /<base64url(dir)>/, which decodes back to the real directory.
+	#
+	# {{OPENCODE_DIR_B64}} is rendered by entrypoints/caddy from OPENCODE_DIR
+	# (default /home/ubuntu).
+	redir /opencode /{{OPENCODE_DIR_B64}}/
+	handle_path /opencode/* {
+		redir /* /{{OPENCODE_DIR_B64}}{uri} 302
+	}
+
+	# PI WEB (web UI for the Pi coding agent) behind a path prefix.
+	# The client is deployment-independent: it uses the document URL as
+	# its base, so /pi/ must redirect from /pi and the prefix is stripped
+	# before proxying (PI WEB serves root paths on its listener).
+	redir {{PI_WEB_PATH}} {{PI_WEB_PATH}}/
+	handle_path {{PI_WEB_PATH}}/* {
+		reverse_proxy 127.0.0.1:{{PI_WEB_PORT}}
+	}
+
+	# Web terminal (ttyd). ttyd runs with --base-path /terminal, so the prefix
+	# must reach it intact: no handle_path here.
+	redir /terminal /terminal/
+	handle /terminal/* {
+		reverse_proxy 127.0.0.1:{{TTYD_PORT}}
+	}
+
+	# Dashboard: the index page and any existing file
+	@dashboard file
+	handle @dashboard {
+		file_server
+	}
+
+	handle / {
+		file_server
+	}
+
+	# OpenCode serves its assets and API with root-absolute paths, so
+	# anything that is not part of the dashboard goes there. Caddy adds
+	# X-Forwarded-For/Host/Proto automatically.
+	handle {
+		reverse_proxy 127.0.0.1:{{OPENCODE_SERVER_PORT}} {
+			header_up X-Forwarded-Port {http.request.port}
+			header_up X-Real-IP {remote_host}
+		}
+	}
+}
