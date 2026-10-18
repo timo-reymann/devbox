@@ -1,0 +1,63 @@
+# Devbox behind a gatekeeper: the real container sleeps until traffic
+# arrives, a generic loading page is served while it starts, and it sleeps
+# again after IDLE_TIMEOUT without activity.
+#
+#   docker compose up -d --no-start   build and create both containers
+#   docker compose start gatekeeper   start only the gatekeeper
+#
+# "docker compose up -d" also works: everything starts at once and the
+# devbox container sleeps after the idle timeout.
+#
+# Both services build the same image. The devbox container shares the
+# gatekeeper's network stack (network_mode: service:), so the gatekeeper can
+# reach the loopback-only services and the published ports front one stack.
+
+name: devbox
+
+# One environment block for both containers: the devbox entrypoints use
+# these variables to pick their internal ports and the gatekeeper derives
+# its upstreams and readiness probes from the same values. Internal ports
+# must not collide with the gatekeeper listeners (8080, 8081, 8082, 8022).
+x-devbox-env: &devbox-env
+  HTTP_PORT: "18080"
+  SSH_PORT: "18022"
+  CODE_SERVER_PORT: "18082"
+  OPENCODE_SERVER_PORT: "18081"
+  TTYD_PORT: "18083"
+  PI_WEB_PORT: "18504"
+
+services:
+  gatekeeper:
+    build: .
+    image: devbox:latest
+    container_name: devbox-gatekeeper
+    user: root # needs the Docker socket
+    entrypoint: ["/opt/devbox/gatekeeper"]
+    restart: unless-stopped
+    stop_grace_period: 30s # stops the devbox container first
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+      - "8082:8082"
+      - "8022:8022"
+    environment:
+      <<: *devbox-env
+      APP_CONTAINER: "devbox-app"
+      IDLE_TIMEOUT: "${IDLE_TIMEOUT:-1m}"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  devbox:
+    build: .
+    image: devbox:latest
+    container_name: devbox-app
+    restart: "no" # the gatekeeper starts and stops this container
+    network_mode: "service:gatekeeper"
+    depends_on:
+      - gatekeeper
+    environment: *devbox-env
+    volumes:
+      - devbox-data:/data
+
+volumes:
+  devbox-data:
