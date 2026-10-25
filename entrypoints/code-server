@@ -6,7 +6,7 @@ mkdir -p /data/code-server/user-data \
          /data/code-server/extensions
 
 exec code-server \
-    --bind-addr "0.0.0.0:${CODE_SERVER_PORT}" \
+    --bind-addr "127.0.0.1:${CODE_SERVER_PORT}" \
     --auth none \
     --app-name "Code Server" \
     --user-data-dir /data/code-server/user-data \

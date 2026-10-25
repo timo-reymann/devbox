@@ -4,6 +4,10 @@
 :{{HTTP_PORT}} {
 	root * /srv/dashboard
 
+	# Basic auth for every route; the snippet is written by entrypoints/caddy
+	# from BASIC_AUTH_* and is empty when no credentials are configured.
+	import auth.caddy
+
 	# VS Code Web (code-server)
 	redir /vscode /vscode/
 	handle_path /vscode/* {

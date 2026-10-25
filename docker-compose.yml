@@ -17,7 +17,7 @@ name: devbox
 # One environment block for both containers: the devbox entrypoints use
 # these variables to pick their internal ports and the gatekeeper derives
 # its upstreams and readiness probes from the same values. Internal ports
-# must not collide with the gatekeeper listeners (8080, 8081, 8082, 8022).
+# must not collide with the gatekeeper listeners (8080, 8022).
 x-devbox-env: &devbox-env
   HTTP_PORT: "18080"
   SSH_PORT: "18022"
@@ -25,6 +25,13 @@ x-devbox-env: &devbox-env
   OPENCODE_SERVER_PORT: "18081"
   TTYD_PORT: "18083"
   PI_WEB_PORT: "18504"
+
+# Credentials for the web UI. Both containers need them: the gatekeeper
+# checks them before waking the devbox container, Caddy enforces them again.
+# Static dev credentials; override from the shell or an .env file.
+x-auth-env: &auth-env
+  BASIC_AUTH_USER: "${BASIC_AUTH_USER:-dev}"
+  BASIC_AUTH_PASSWORD: "${BASIC_AUTH_PASSWORD:-dev}"
 
 services:
   gatekeeper:
@@ -37,17 +44,15 @@ services:
     stop_grace_period: 30s # stops the devbox container first
     ports:
       - "8080:8080"
-      - "8081:8081"
-      - "8082:8082"
       - "8022:8022"
     environment:
-      <<: *devbox-env
+      <<: [*devbox-env, *auth-env]
       APP_CONTAINER: "devbox-app"
       IDLE_TIMEOUT: "${IDLE_TIMEOUT:-1m}"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
-  devbox:
+  devbox-app:
     build: .
     image: devbox:latest
     container_name: devbox-app
@@ -55,7 +60,8 @@ services:
     network_mode: "service:gatekeeper"
     depends_on:
       - gatekeeper
-    environment: *devbox-env
+    environment:
+      <<: [*devbox-env, *auth-env]
     volumes:
       - devbox-data:/data
 

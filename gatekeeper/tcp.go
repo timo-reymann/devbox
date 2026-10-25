@@ -29,12 +29,25 @@ func (g *Gatekeeper) ServeTCP(port int, target string) error {
 func (g *Gatekeeper) splice(conn net.Conn, target string) {
 	defer conn.Close()
 
-	// The held connection is an open session: it keeps the app awake while
-	// it waits and while it is spliced.
-	g.tunnels.Add(1)
-	defer g.tunnels.Add(-1)
-	g.ensureRunning()
-	g.touch()
+	if g.cfg.Auth != nil {
+		// A raw TCP connection cannot be authenticated here, so it must
+		// not wake the app or keep it awake: only a login on the web side
+		// starts the container.
+		if !g.isRunning() {
+			log.Printf("refusing %s: %s is asleep, log in on the web UI to wake it", conn.RemoteAddr(), g.cfg.AppContainer)
+			return
+		}
+		closed := make(chan struct{})
+		defer close(closed)
+		go g.holdAfterSettle(closed)
+	} else {
+		// The held connection is an open session: it keeps the app awake
+		// while it waits and while it is spliced.
+		g.tunnels.Add(1)
+		defer g.tunnels.Add(-1)
+		g.ensureRunning()
+		g.touch()
+	}
 
 	if !g.awaitReady(target) {
 		return
@@ -51,6 +64,26 @@ func (g *Gatekeeper) splice(conn net.Conn, target string) {
 	go func() { _, _ = io.Copy(up, conn); close(done) }()
 	go func() { _, _ = io.Copy(conn, up); close(done) }()
 	<-done
+}
+
+// sshSettle must exceed LoginGraceTime in ssh/sshd_config.d/10-devbox.conf,
+// so a connection that stays open this long has authenticated.
+const sshSettle = 30 * time.Second
+
+// holdAfterSettle counts a connection as an open session only once it
+// outlived sshSettle, so connections that never log in cannot keep the app
+// awake.
+func (g *Gatekeeper) holdAfterSettle(closed <-chan struct{}) {
+	select {
+	case <-time.After(sshSettle):
+	case <-closed:
+		return
+	}
+	g.tunnels.Add(1)
+	g.touch()
+	<-closed
+	g.tunnels.Add(-1)
+	g.touch()
 }
 
 // awaitReady waits until the probe passes or the start timeout expires.
