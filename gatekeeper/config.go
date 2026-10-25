@@ -16,6 +16,7 @@ type Config struct {
 	IdleTimeout  time.Duration // stop the app after this much inactivity; 0 disables
 	StartTimeout time.Duration // give up on connections held during startup
 	DockerSocket string        // Docker control socket
+	Auth         *Auth         // basic auth checked before waking the app; nil when unset
 
 	// Upstreams inside the shared network namespace.
 	HTTPUpstream string // app Caddy: dashboard and reverse proxy
@@ -47,6 +48,8 @@ func LoadConfig() (*Config, error) {
 		PiUpstream:   "127.0.0.1:" + env("PI_WEB_PORT", "18504"),
 		PiPath:       env("PI_WEB_PATH", "/pi"),
 	}
+
+	cfg.Auth = NewAuth(env("BASIC_AUTH_USER", "devbox"), os.Getenv("BASIC_AUTH_PASSWORD"), os.Getenv("BASIC_AUTH_HASH"))
 
 	idle, err := parseDuration("IDLE_TIMEOUT", env("IDLE_TIMEOUT", "30m"))
 	if err != nil {

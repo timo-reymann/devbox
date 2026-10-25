@@ -202,10 +202,7 @@ RUN install -d -m 0755 /data/ssh \
     && chown -R ubuntu:ubuntu /data
 
 EXPOSE 8022 \
-       8080 \
-       8081 \
-       8082 \
-       8504
+       8080
 
 # copy entrypoints
 COPY entrypoints/ /opt/devbox/

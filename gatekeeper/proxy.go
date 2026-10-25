@@ -76,6 +76,11 @@ func (g *Gatekeeper) newProxy(target string) *httputil.ReverseProxy {
 // HandleHTTP returns the handler for one public HTTP port.
 func (g *Gatekeeper) HandleHTTP(route *httpRoute) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Authenticate before anything wakes the app or counts as activity.
+		if a := g.cfg.Auth; a != nil && !a.Check(r) {
+			a.Challenge(w)
+			return
+		}
 		g.ensureRunning()
 		g.touch()
 
@@ -145,6 +150,31 @@ func (g *Gatekeeper) ensureRunning() {
 	g.stateRunning = running
 	g.stateAt = time.Now()
 	g.stateMu.Unlock()
+}
+
+// isRunning reports whether the app container runs, without starting it.
+// The answer is cached for a few seconds like ensureRunning's.
+func (g *Gatekeeper) isRunning() bool {
+	g.stateMu.Lock()
+	if time.Since(g.stateAt) < 5*time.Second {
+		running := g.stateRunning
+		g.stateMu.Unlock()
+		return running
+	}
+	g.stateMu.Unlock()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	running, err := g.docker.Running(ctx, g.cfg.AppContainer)
+	if err != nil {
+		log.Printf("inspect %s: %v", g.cfg.AppContainer, err)
+		return false
+	}
+	g.stateMu.Lock()
+	g.stateRunning = running
+	g.stateAt = time.Now()
+	g.stateMu.Unlock()
+	return running
 }
 
 // markStopped records that the app is no longer running, so the idle loop

@@ -15,6 +15,21 @@ OPENCODE_DIR_B64=$(printf '%s' "$OPENCODE_DIR" | base64 -w 0 | tr '+/' '-_' | tr
 
 install -d -m 0755 /srv/dashboard "$HOME/.config/caddy"
 
+# Basic auth for the whole site. BASIC_AUTH_HASH (bcrypt, from
+# `caddy hash-password`) wins over BASIC_AUTH_PASSWORD (hashed here).
+AUTH_FILE="$HOME/.config/caddy/auth.caddy"
+BASIC_AUTH_USER="${BASIC_AUTH_USER:-devbox}"
+if [ -z "$BASIC_AUTH_HASH" ] && [ -n "$BASIC_AUTH_PASSWORD" ]; then
+    BASIC_AUTH_HASH=$(caddy hash-password --plaintext "$BASIC_AUTH_PASSWORD")
+fi
+if [ -n "$BASIC_AUTH_HASH" ]; then
+    printf 'basic_auth {\n\t%s %s\n}\n' "$BASIC_AUTH_USER" "$BASIC_AUTH_HASH" > "$AUTH_FILE"
+else
+    echo "caddy: WARNING: BASIC_AUTH_PASSWORD/BASIC_AUTH_HASH not set, web UI is unauthenticated" >&2
+    echo '# basic auth disabled' > "$AUTH_FILE"
+fi
+chmod 0600 "$AUTH_FILE"
+
 sed -e "s|{{SSH_HOST}}|${SSH_HOST}|g" \
     -e "s|{{SSH_PUBLISHED_PORT}}|${SSH_PUBLISHED_PORT}|g" \
     -e "s|{{PI_WEB_PATH}}|${PI_WEB_PATH}|g" \

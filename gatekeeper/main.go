@@ -17,10 +17,8 @@ import (
 // Public listen ports. docker-compose.yml publishes exactly these on the
 // gatekeeper container.
 const (
-	portWeb      = 8080 // front door: dashboard and all Caddy routes
-	portOpenCode = 8081 // OpenCode server, published directly
-	portCode     = 8082 // code-server, published directly
-	portSSH      = 8022 // sshd, raw TCP
+	portWeb = 8080 // front door: dashboard and all Caddy routes
+	portSSH = 8022 // sshd, raw TCP
 )
 
 func main() {
@@ -37,6 +35,9 @@ func main() {
 	}
 	g.touch() // the idle clock starts with the gatekeeper
 
+	if cfg.Auth == nil {
+		log.Printf("WARNING: BASIC_AUTH_PASSWORD/BASIC_AUTH_HASH not set, any traffic wakes %s", cfg.AppContainer)
+	}
 	log.Printf("waking %s on traffic, idle stop %s", cfg.AppContainer, idleOrOff(cfg.IdleTimeout))
 	log.Printf("upstreams: web=%s ssh=%s code=%s opencode=%s ttyd=%s pi=%s",
 		cfg.HTTPUpstream, cfg.SSHUpstream, cfg.CodeUpstream, cfg.OpenUpstream, cfg.TtydUpstream, cfg.PiUpstream)
@@ -55,8 +56,6 @@ func main() {
 	// per-path probes decide when a route stops showing the loading page.
 	routes := []httpRoute{
 		{port: portWeb, target: cfg.HTTPUpstream, probeFor: cfg.frontProbe},
-		{port: portOpenCode, target: cfg.OpenUpstream, probeFor: constProbe(cfg.OpenUpstream)},
-		{port: portCode, target: cfg.CodeUpstream, probeFor: constProbe(cfg.CodeUpstream)},
 	}
 	for i := range routes {
 		route := routes[i]
@@ -76,11 +75,6 @@ func main() {
 	s := <-sig
 	log.Printf("%s received, stopping %s", s, cfg.AppContainer)
 	g.Shutdown()
-}
-
-// constProbe always probes the same upstream.
-func constProbe(upstream string) func(string) string {
-	return func(string) string { return upstream }
 }
 
 func idleOrOff(d time.Duration) string {
