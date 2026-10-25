@@ -66,12 +66,13 @@ Standalone (one container, everything inside):
 | 8022 | OpenSSH | all interfaces | yes | `ssh -p <published> ubuntu@<host>` |
 | 8081 | OpenCode server | `127.0.0.1` | no | via Caddy (dashboard link / catch-all) |
 | 8082 | code-server | `127.0.0.1` | no | via Caddy `/vscode/` |
-| 8504 | PI WEB | `127.0.0.1` | listed\* | via Caddy `/pi/` |
+| 8504 | PI WEB | `127.0.0.1` | no\* | via Caddy `/pi/` |
 | 8083 | ttyd web terminal | `127.0.0.1` | no | via Caddy `/terminal/` |
 | 2019 | Caddy admin API | `localhost` | no | internal |
 
 \* 8504 is loopback-bound by default (`PI_WEB_HOST`), so publishing it with
-`-p` does nothing until you set `PI_WEB_HOST=0.0.0.0`.
+`-p` does nothing until you set `PI_WEB_HOST=0.0.0.0` (and it would then
+bypass the Caddy basic auth).
 
 Routes on port 8080: `/` dashboard, `/vscode/`, `/opencode` (redirect),
 `/pi/`, `/terminal/` – everything else is proxied to OpenCode.
