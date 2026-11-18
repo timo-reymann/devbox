@@ -1,7 +1,7 @@
 # gatekeeper: small Go daemon that fronts the sleeping devbox container,
 # wakes it on traffic, serves a loading page until backends answer and stops
 # it again after idle. Built on the build platform and cross-compiled.
-FROM --platform=$BUILDPLATFORM golang:1.25-bookworm AS gatekeeper-build
+FROM --platform=$BUILDPLATFORM golang:1.27-bookworm AS gatekeeper-build
 ARG TARGETARCH
 COPY gatekeeper/ /src/gatekeeper/
 WORKDIR /src/gatekeeper
